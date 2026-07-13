@@ -13,7 +13,7 @@ FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN pnpm add next@14.2.35 --no-frozen-lockfile && pnpm build
+RUN pnpm add next@14.2.35 && pnpm build
 
 FROM node:20-alpine AS runner
 WORKDIR /app
