@@ -6,6 +6,7 @@ RUN npm install -g pnpm
 
 FROM base AS deps
 COPY package.json pnpm-lock.yaml .npmrc ./
+COPY patches/ ./patches/
 RUN pnpm install --frozen-lockfile
 
 FROM base AS builder
