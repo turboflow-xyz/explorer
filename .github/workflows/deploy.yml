@@ -1,0 +1,121 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+
+env:
+  AWS_REGION: ap-northeast-1
+  AWS_ACCOUNT: "954774582998"
+  PROJECT_NAME: explorer
+  HELM_CHARTS_REPO: turboflow-xyz/amber-helm-charts
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: 拉取代码
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: 配置 AWS 凭证
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: 登录 ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: 设置 Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 计算构建变量
+        id: vars
+        run: |
+          SHORT_SHA=${GITHUB_SHA::8}
+          TAG="main-${SHORT_SHA}-${GITHUB_RUN_ID}"
+          ECR_REPO="${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/cex-backend-${PROJECT_NAME}-prod"
+          aws ecr describe-repositories \
+            --repository-names "cex-backend-${PROJECT_NAME}-prod" \
+            --region "${AWS_REGION}" > /dev/null 2>&1 || \
+            aws ecr create-repository \
+              --repository-name "cex-backend-${PROJECT_NAME}-prod" \
+              --region "${AWS_REGION}"
+          echo "tag=${TAG}"           >> "$GITHUB_OUTPUT"
+          echo "ecr_repo=${ECR_REPO}" >> "$GITHUB_OUTPUT"
+
+      - name: 构建并推送镜像到 ECR
+        uses: docker/build-push-action@v5
+        id: build
+        with:
+          context: .
+          file: devops/main/Dockerfile
+          push: true
+          tags: ${{ steps.vars.outputs.ecr_repo }}:${{ steps.vars.outputs.tag }}
+          provenance: false
+          cache-from: type=registry,ref=${{ steps.vars.outputs.ecr_repo }}:cache
+          cache-to: type=registry,ref=${{ steps.vars.outputs.ecr_repo }}:cache,mode=max,image-manifest=true,oci-mediatypes=true
+
+      - name: 保存 tag 到 artifact
+        if: success()
+        run: echo "${{ steps.vars.outputs.tag }}" > latest-tag.txt
+
+      - name: 上传 tag artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: latest-tag
+          path: latest-tag.txt
+          retention-days: 30
+
+      - name: 更新 Helm Chart values.yaml
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          TAG="${{ steps.vars.outputs.tag }}"
+          FILE_PATH="apps/${PROJECT_NAME}/main/chart/values.yaml"
+
+          RESPONSE=$(gh api "repos/${HELM_CHARTS_REPO}/contents/${FILE_PATH}")
+          FILE_SHA=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin)['sha'])")
+          CONTENT=$(echo "$RESPONSE" | python3 -c "import sys,json,base64; print(base64.b64decode(json.load(sys.stdin)['content']).decode())")
+
+          UPDATED=$(echo "$CONTENT" | sed "s|^\(\s*tag:\s*\).*|\1${TAG}|")
+          if [ "$CONTENT" = "$UPDATED" ]; then
+            echo "tag 未变化，已是最新"; exit 0
+          fi
+
+          ENCODED=$(echo "$UPDATED" | base64 | tr -d '\n')
+          gh api --method PUT "repos/${HELM_CHARTS_REPO}/contents/${FILE_PATH}" \
+            --field message="ci(${PROJECT_NAME}): update main image tag to ${TAG}" \
+            --field content="${ENCODED}" \
+            --field sha="${FILE_SHA}" \
+            --field branch="main" \
+            --jq '.commit.sha'
+
+          echo "==> Helm tag 已更新为: ${TAG}"
+
+      - name: 构建摘要
+        if: always()
+        run: |
+          TAG=${{ steps.vars.outputs.tag }}
+          ECR_REPO=${{ steps.vars.outputs.ecr_repo }}
+          DIGEST=${{ steps.build.outputs.digest }}
+          { echo "### Deploy 构建摘要"
+            echo "| 项目 | 值 |"
+            echo "|------|-----|"
+            echo "| Tag | \`${TAG}\` |"
+            echo "| 镜像 | \`${ECR_REPO}:${TAG}\` |"
+            echo "| Digest | \`${DIGEST}\` |"
+            echo ""
+            echo "> ✅ Helm tag 已更新，请前往 ArgoCD 手动 Sync \`explorer-main\`"
+          } >> "$GITHUB_STEP_SUMMARY"
