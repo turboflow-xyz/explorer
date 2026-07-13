@@ -5,7 +5,7 @@ WORKDIR /app
 RUN npm install -g pnpm
 
 FROM base AS deps
-COPY package.json pnpm-lock.yaml .npmrc ./
+COPY package.json pnpm-lock.yaml .npmrc .pnpmfile.cjs ./
 COPY patches/ ./patches/
 RUN pnpm install --frozen-lockfile
 
