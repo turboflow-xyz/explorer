@@ -14,12 +14,12 @@ export async function generateMetadata({ params: { signature } }: Props): Promis
     if (signature) {
         return {
             description: `Interactively inspect the Solana transaction with signature ${signature}`,
-            title: `Transaction Inspector | ${signature} | Solana`,
+            title: `Transaction Inspector | ${signature} | Turboflow`,
         };
     } else {
         return {
             description: `Interactively inspect Solana transactions`,
-            title: `Transaction Inspector | Solana`,
+            title: `Transaction Inspector | Turboflow`,
         };
     }
 }

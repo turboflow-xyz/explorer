@@ -2,7 +2,7 @@ import FeatureGatesPageClient from './page-client';
 
 export const metadata = {
     description: `Overview of the feature gates on Solana`,
-    title: `Feature Gates | Solana`,
+    title: `Feature Gates | Turboflow`,
 };
 
 export default function FeatureGatesPage() {
