@@ -13,7 +13,7 @@ type Props = Readonly<{
 
 export async function generateMetadata(props: AddressPageMetadataProps): Promise<Metadata> {
     return withSentryTraceData({
-        description: `The Interface Definition Language (IDL) file for the program at address ${props.params.address} on Solana`,
+        description: `The Interface Definition Language (IDL) file for the program at address ${props.params.address} on Turboflow`,
         title: `Program IDL | ${await getReadableTitleFromAddress(props)} | Turboflow`,
     });
 }

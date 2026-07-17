@@ -5,7 +5,7 @@ import ProgramMultisigPageClient from './page-client';
 
 export async function generateMetadata(props: AddressPageMetadataProps): Promise<Metadata> {
     return {
-        description: `Multisig information for the upgrade authority of the program with address ${props.params.address} on Solana`,
+        description: `Multisig information for the upgrade authority of the program with address ${props.params.address} on Turboflow`,
         title: `Upgrade Authority Multisig | ${await getReadableTitleFromAddress(props)} | Turboflow`,
     };
 }

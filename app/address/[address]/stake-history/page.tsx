@@ -7,7 +7,7 @@ type Props = Readonly<{
 }>;
 
 export const metadata = {
-    description: `Stake history for each epoch on Solana`,
+    description: `Stake history for each epoch on Turboflow`,
     title: `Stake History | Turboflow`,
 };
 

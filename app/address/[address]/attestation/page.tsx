@@ -11,7 +11,7 @@ type Props = Readonly<{
 
 export async function generateMetadata(props: AddressPageMetadataProps): Promise<Metadata> {
     return {
-        description: `Attestation Data for the Attestation Account with address ${props.params.address} on Solana`,
+        description: `Attestation Data for the Attestation Account with address ${props.params.address} on Turboflow`,
         title: `Attestation Data | ${await getReadableTitleFromAddress(props)} | Turboflow`,
     };
 }

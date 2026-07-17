@@ -7,7 +7,7 @@ type Props = Readonly<{
 }>;
 
 export const metadata = {
-    description: `Recent blockhashes on Solana`,
+    description: `Recent blockhashes on Turboflow`,
     title: `Recent Blockhashes | Turboflow`,
 };
 

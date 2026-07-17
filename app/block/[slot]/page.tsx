@@ -10,7 +10,7 @@ type Props = Readonly<{
 
 export async function generateMetadata({ params: { slot } }: Props): Promise<Metadata> {
     return {
-        description: `History of all transactions during block ${slot} on Solana`,
+        description: `History of all transactions during block ${slot} on Turboflow`,
         title: `Block | ${slot} | Turboflow`,
     };
 }

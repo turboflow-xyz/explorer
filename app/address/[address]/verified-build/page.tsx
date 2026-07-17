@@ -5,7 +5,7 @@ import VerifiedBuildClient from './page-client';
 
 export async function generateMetadata(props: AddressPageMetadataProps): Promise<Metadata> {
     return {
-        description: `Contents of the verified build info for the program with address ${props.params.address} on Solana`,
+        description: `Contents of the verified build info for the program with address ${props.params.address} on Turboflow`,
         title: `Verified Build | ${await getReadableTitleFromAddress(props)} | Turboflow`,
     };
 }

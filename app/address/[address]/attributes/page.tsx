@@ -11,7 +11,7 @@ type Props = Readonly<{
 
 export async function generateMetadata(props: AddressPageMetadataProps): Promise<Metadata> {
     return {
-        description: `Attributes of the Metaplex NFT with address ${props.params.address} on Solana`,
+        description: `Attributes of the Metaplex NFT with address ${props.params.address} on Turboflow`,
         title: `Metaplex NFT Attributes | ${await getReadableTitleFromAddress(props)} | Turboflow`,
     };
 }
